@@ -1,0 +1,134 @@
+﻿<Window x:Class="MusicDownloader.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:src="clr-namespace:MusicDownloader"
+    Title="Music Downloader" Height="600" Width="800" Icon="icons/main.ico">
+
+    <Window.Resources>
+        <DataTemplate x:Key="treeViewItemTemplate">
+            <src:TreeEntry/>
+        </DataTemplate>
+
+        <Style TargetType="TreeViewItem" x:Key="treeViewItemStyle">
+            <Setter Property="IsExpanded" Value="{Binding Path=NeedToPopulate, Mode=TwoWay}"/>
+            <Setter Property="ItemsSource" Value="{Binding Path=ChildrenView}"/>
+            <Setter Property="ItemTemplate" Value="{StaticResource treeViewItemTemplate}"/>
+        </Style>
+
+        <Style TargetType="TreeViewItem" BasedOn="{StaticResource treeViewItemStyle}"/>
+    </Window.Resources>
+    
+    <Grid>
+        <TabControl>
+            <TabItem Header="Download">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Name="c_gridTop">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="Destination folder"/>
+                        <TextBox Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Name="c_destPath" TextChanged="DestinationFolder_TextChanged"/>
+                        <Button Grid.Column="2" Width="80" VerticalAlignment="Center" Click="DestinationBrowse_Clicked">Browse</Button>
+                    </Grid>
+                    <Separator Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                    <Grid Grid.Row="2" Name="c_gridMiddle">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.5*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Choose category :"/>
+                            <ComboBox Grid.Row="1" Name="c_category" SelectionChanged="Category_Changed">
+                                <ComboBoxItem Content="Movies"/>
+                                <ComboBoxItem Content="Movies (part 2)"/>
+                                <ComboBoxItem Content="Pop"/>
+                                <ComboBoxItem Content="Artist"/>
+                                <ComboBoxItem Content="Artist (part 2)"/>
+                                <ComboBoxItem Content="Singles"/>
+                                <ComboBoxItem Content="Oldies"/>
+                                <ComboBoxItem Content="Indian"/>
+                                <ComboBoxItem Content="Bhangra"/>
+                                <ComboBoxItem Content="Ghazals"/>
+                                <ComboBoxItem Content="Instrumental"/>
+                                <ComboBoxItem Content="Pakistani"/>
+                            </ComboBox>
+                            <Button Grid.Row="2" Margin="0,15,0,0" Name="c_addItem" Content="Add selection to download list" Click="AddItem_Clicked"/>
+                            <TreeView Grid.Row="3" Name="c_tree" ItemTemplate="{StaticResource treeViewItemTemplate}" PreviewMouseLeftButtonDown="c_tree_PreviewMouseLeftButtonDown" PreviewMouseMove="c_tree_PreviewMouseMove"/>
+                        </Grid>
+                        <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Center" Width="2"/>
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ListBox Grid.Row="0" Name="c_list" KeyDown="ListBox_KeyDown" AllowDrop="True" DragEnter="c_list_DragEnter" Drop="c_list_Drop">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=FullPath}" ToolTip="{Binding Path=FullPath}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                <TextBlock Text="Total Progress :  "/>
+                                <TextBlock Name="c_totalProgressText"/>
+                            </StackPanel>
+                            <ProgressBar Grid.Row="2" Height="20" HorizontalAlignment="Stretch" Name="c_totalProgress"/>
+                            <StackPanel Grid.Row="3" Orientation="Horizontal">
+                                <TextBlock Text="Current Progress :  "/>
+                                <TextBlock Name="c_currentProgressText"/>
+                            </StackPanel>
+                            <ProgressBar Grid.Row="4" Height="20" HorizontalAlignment="Stretch" Name="c_currentProgress"/>
+                        </Grid>
+                    </Grid>
+                    <Grid Grid.Row="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0.5*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Margin="10,10,10,0" Text="Filter" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" Margin="10,10,10,0" Name="c_filter" TextChanged="Filter_Changed"/>
+                        </Grid>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Width="150" Margin="10,10,10,0" HorizontalAlignment="Center" VerticalAlignment="Center" Name="c_downloadButton" Click="DownloadOrCancel_Clicked">Start Downloading</Button>
+                            <Button Width="150" Margin="10,10,10,0" HorizontalAlignment="Left" VerticalAlignment="Center" Click="Exit_Clicked">Exit</Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Logs">
+                <Grid Margin="10">
+                    <TextBox IsReadOnly="True" Name="c_log" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Website">
+                <Grid Margin="10">
+                    <WebBrowser Source="http://www.apunkabollywood.com/browser/category/view"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
