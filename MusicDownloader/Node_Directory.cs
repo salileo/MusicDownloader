@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Web;
 using System.Windows.Data;
 using System.Windows.Threading;
 
@@ -111,7 +113,7 @@ namespace MusicDownloader
         public override void Init()
         {
             m_children.Clear();
-            m_needToPopulate = true;
+            m_needToPopulate = false;
 
             Node_Song dummySong = new Node_Song("Dummy", "Dummy");
             dummySong.Init();
@@ -233,7 +235,9 @@ namespace MusicDownloader
             HttpWebResponse response = null;
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(URL);
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                string finalURL = "https://api.gigahost123.com/api/listS3?bucket=mp3.gigahost123.com&path=" + HttpUtility.UrlEncode(this.URL);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(finalURL);
                 response = (HttpWebResponse)request.GetResponse();
                 Stream responseStream = response.GetResponseStream();
                 sb = new StringBuilder();
@@ -288,7 +292,7 @@ namespace MusicDownloader
 
             response = null;
 
-            string html_data = sb.ToString();
+            string json_data = sb.ToString();
 
             if (asyncInfo.Worker.CancellationPending)
             {
@@ -301,18 +305,10 @@ namespace MusicDownloader
 
             try
             {
-                //first search for subfolders
-                List<string> div_sections = Utils.PartitionString(html_data, false, "<div id=\"categories\">", "</div>");
+                Online_Page page = JsonConvert.DeserializeObject<Online_Page>(json_data);
 
-                if (div_sections.Count > 0)
+                if (page.folders.Length > 0)
                 {
-                    if (div_sections.Count != 1)
-                        throw new Exception("Error while parsing categories.");
-
-                    List<string> li_sections = Utils.PartitionString(div_sections[0], false, "<li>", "</li>");
-                    if (li_sections.Count == 0)
-                        throw new Exception("Error while evaluating sub-folders.");
-
                     if (asyncInfo.Worker.CancellationPending)
                     {
                         asyncInfo.WorkArgs.Cancel = true;
@@ -323,18 +319,13 @@ namespace MusicDownloader
                         asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 60, null);
 
                     double count = 0;
-                    foreach (string li_entry in li_sections)
+                    foreach (Online_Folder folder_entry in page.folders)
                     {
-                        List<string> href = Utils.PartitionString(li_entry, false, "href=\"", "\"");
-                        List<string> name = Utils.PartitionString(li_entry, false, "\">", "</a>");
+                        string folder_url = "/" + folder_entry.Prefix;
+                        string[] parts = folder_url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        string folder_name = parts[parts.Length - 1];
 
-                        if ((href.Count != 1) || (name.Count != 1))
-                            throw new Exception("Error while fetching folder name and href.");
-
-                        string folder_name = Utils.RemoveWhitespaces(name[0]);
-                        string folder_url = Utils.RemoveWhitespaces(href[0]);
-
-                        if (string.IsNullOrEmpty(folder_name) || string.IsNullOrEmpty(folder_url))
+                        if (string.IsNullOrEmpty(folder_url) || string.IsNullOrEmpty(folder_name))
                             throw new Exception("Missing name/url for a folder.");
 
                         Node_Directory subfolder = new Node_Directory(folder_name, folder_url);
@@ -343,7 +334,7 @@ namespace MusicDownloader
                         count++;
 
                         if (asyncInfo.ProgressCallback != null)
-                            asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 60 + (((double)count / (double)li_sections.Count) * 40), subfolder);
+                            asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 60 + (((double)count / (double)page.folders.Length) * 20), subfolder);
 
                         if (asyncInfo.Worker.CancellationPending)
                         {
@@ -352,13 +343,9 @@ namespace MusicDownloader
                         }
                     }
                 }
-                else
-                {
-                    //next search for songs
-                    List<string> tr_sections = Utils.PartitionString(html_data, false, "<tr>", "</tr>");
-                    if (tr_sections.Count == 0)
-                        throw new Exception("Error while evaluating songs.");
 
+                if (page.files.Length > 0)
+                {
                     if (asyncInfo.Worker.CancellationPending)
                     {
                         asyncInfo.WorkArgs.Cancel = true;
@@ -366,59 +353,31 @@ namespace MusicDownloader
                     }
 
                     if (asyncInfo.ProgressCallback != null)
-                        asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 60, null);
+                        asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 80, null);
 
                     double count = 0;
-                    foreach (string tr_entry in tr_sections)
+                    foreach (Online_File file_entry in page.files)
                     {
-                        if (tr_entry.Contains("checkbox") && tr_entry.Contains("img src"))
-                        {
-                            List<string> td_sections = Utils.PartitionString(tr_entry, false, "<td ", "</td>");
-                            if (td_sections.Count == 0)
-                                throw new Exception("Error while evaluating song hrefs.");
+                        string song_url = "/" + file_entry.Key;
+                        string[] parts = song_url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        string song_name = parts[parts.Length - 1];
 
-                            foreach (string td_entry in td_sections)
-                            {
-                                if (td_entry.Contains("<small>"))
-                                {
-                                    List<string> href = Utils.PartitionString(td_entry, false, "href=\"", "\"");
-                                    List<string> name = Utils.PartitionString(td_entry, false, "\">", "</a>");
+                        if (string.IsNullOrEmpty(song_url) || string.IsNullOrEmpty(song_name))
+                            throw new Exception("Missing name/url for a song.");
 
-                                    if ((href.Count != 1) || (name.Count != 1))
-                                        throw new Exception("Error while fetching song name and href.");
-
-                                    string song_name = Utils.RemoveWhitespaces(name[0]);
-                                    string song_url = Utils.RemoveWhitespaces(href[0]);
-
-                                    if (string.IsNullOrEmpty(song_name) || string.IsNullOrEmpty(song_url))
-                                        throw new Exception("Missing name/url for a song.");
-
-                                    Node_Song song = new Node_Song(song_name, song_url);
-                                    song.Parent = this;
-                                    AddChild(song);
-
-                                    if (asyncInfo.ProgressCallback != null)
-                                        asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 60 + (((double)count / (double)tr_sections.Count) * 40), song);
-                                }
-
-                                if (asyncInfo.Worker.CancellationPending)
-                                {
-                                    asyncInfo.WorkArgs.Cancel = true;
-                                    return false;
-                                }
-                            }
-                        }
-
+                        Node_Song song = new Node_Song(song_name, song_url);
+                        song.Parent = this;
+                        AddChild(song);
                         count++;
+
+                        if (asyncInfo.ProgressCallback != null)
+                            asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 80 + (((double)count / (double)page.files.Length) * 20), song);
 
                         if (asyncInfo.Worker.CancellationPending)
                         {
                             asyncInfo.WorkArgs.Cancel = true;
                             return false;
                         }
-
-                        if (asyncInfo.ProgressCallback != null)
-                            asyncInfo.ProgressCallback("Parsing page for folder '" + Name + "'.", 60 + (((double)count / (double)tr_sections.Count) * 40), null);
                     }
                 }
             }
@@ -432,5 +391,25 @@ namespace MusicDownloader
 
             return true;
         }
+    }
+
+    class Online_Folder
+    {
+        public string Prefix;
+    }
+
+    class Online_File
+    {
+        public string Key;
+        public string LastModified;
+        public string ETag;
+        public int Size;
+        public string StorageClass;
+    }
+
+    class Online_Page
+    {
+        public Online_File[] files;
+        public Online_Folder[] folders;
     }
 }

@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Web;
 using System.Windows.Threading;
 
 namespace MusicDownloader
@@ -15,7 +17,17 @@ namespace MusicDownloader
         {
             get
             {
-                string path = string.IsNullOrEmpty(Mp3Path) ? (Name + ".mp3") : Path.GetFileName(Mp3Path);
+                string path;
+                if (string.IsNullOrEmpty(Mp3Path))
+                {
+                    path = Name + ".mp3";
+                }
+                else
+                {
+                    Uri mp3 = new Uri(Mp3Path);
+                    path = Path.GetFileName(mp3.LocalPath.Replace("\"", ""));
+                }
+
                 if (!path.EndsWith("mp3") && !path.EndsWith("wma"))
                     path += ".mp3";
 
@@ -51,14 +63,14 @@ namespace MusicDownloader
         {
             get
             {
-                return m_needToPopulated;
+                return m_needToPopulate;
             }
             set
             {
-                m_needToPopulated = value;
+                m_needToPopulate = value;
                 NotifyPropertyChanged("NeedToPopulate");
 
-                if (m_needToPopulated && !IsParsed && !IsParsing &&
+                if (m_needToPopulate && !IsParsed && !IsParsing &&
                     ((m_worker == null) || (!m_worker.IsBusy)))
                 {
                     if (m_worker == null)
@@ -91,7 +103,7 @@ namespace MusicDownloader
 
         #region PrivateMembers
         private string m_mp3path;
-        private bool m_needToPopulated;
+        private bool m_needToPopulate;
         private BackgroundWorker m_worker;
         #endregion
 
@@ -154,8 +166,9 @@ namespace MusicDownloader
             HttpWebResponse response = null;
             try
             {
-                int tmp = ServicePointManager.DefaultConnectionLimit;
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(URL);
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+                string finalURL = "https://api.gigahost123.com/api/getDownloadUrl?bucket=mp3.gigahost123.com&key=" + HttpUtility.UrlEncode(this.URL);
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(finalURL);
                 response = (HttpWebResponse)request.GetResponse();
                 Stream responseStream = response.GetResponseStream();
                 sb = new StringBuilder();
@@ -210,7 +223,7 @@ namespace MusicDownloader
 
             response = null;
 
-            string html_data = sb.ToString();
+            string json_data = sb.ToString();
 
             if (asyncInfo.Worker.CancellationPending)
             {
@@ -221,41 +234,17 @@ namespace MusicDownloader
             if (asyncInfo.ProgressCallback != null)
                 asyncInfo.ProgressCallback("Parsing page for song '" + Name + "'.", 50, null);
 
-            List<string> href_sections = Utils.PartitionString(html_data, true, "<a href", "</a>");
-            if (href_sections.Count == 0)
-                throw new Exception("Error in evaluating href sections.");
-
-            if (asyncInfo.Worker.CancellationPending)
+            try
             {
-                asyncInfo.WorkArgs.Cancel = true;
-                return false;
-            }
-
-            if (asyncInfo.ProgressCallback != null)
-                asyncInfo.ProgressCallback("Parsing page for song '" + Name + "'.", 60, null);
-
-            double count = 0;
-            foreach (string href_entry in href_sections)
-            {
+                Online_Song song = JsonConvert.DeserializeObject<Online_Song>(json_data);
                 if (asyncInfo.Worker.CancellationPending)
                 {
                     asyncInfo.WorkArgs.Cancel = true;
                     return false;
                 }
 
-                if (href_entry.Contains("Free User Click Here To Download"))
-                {
-                    List<string> href = Utils.PartitionString(href_entry, false, "href=\"", "\"");
-                    if (href.Count != 1)
-                        throw new Exception("Error while fetching the song link.");
-
-                    string final_url = Utils.RemoveWhitespaces(href[0]);
-                    mp3path = final_url;
-                    NotifyPropertyChanged("Mp3Path");
-                    break;
-                }
-
-                count++;
+                mp3path = song.url;
+                NotifyPropertyChanged("Mp3Path");
 
                 if (asyncInfo.Worker.CancellationPending)
                 {
@@ -263,17 +252,19 @@ namespace MusicDownloader
                     return false;
                 }
 
-                if (asyncInfo.ProgressCallback != null)
-                    asyncInfo.ProgressCallback("Parsing page for song '" + Name + "'.", 60 + (((double)count / (double)href_sections.Count) * 40), null);
-            }
+                if (string.IsNullOrEmpty(mp3path))
+                    throw (new Exception("No song link found."));
 
-            if (string.IsNullOrEmpty(mp3path))
-                throw (new Exception("No song link found."));
+                path = mp3path;
+            }
+            catch(Exception exp)
+            {
+                throw exp;
+            }
 
             if (asyncInfo.ProgressCallback != null)
                 asyncInfo.ProgressCallback("Done processing page for song '" + Name + "'.", 100, null);
 
-            path = mp3path;
             return true;
         }
 
@@ -333,6 +324,7 @@ namespace MusicDownloader
             FileStream outputFile = null;
             try
             {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Mp3Path);
                 response = (HttpWebResponse)request.GetResponse();
                 Stream responseStream = response.GetResponseStream();
@@ -515,5 +507,10 @@ namespace MusicDownloader
                     throw exception;
             }
         }
+    }
+
+    class Online_Song
+    {
+        public string url;
     }
 }

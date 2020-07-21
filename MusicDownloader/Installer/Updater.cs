@@ -71,7 +71,7 @@ namespace GenericUpdater
                 UpdaterInfo info = e.Result as UpdaterInfo;
                 if (info.result != info.currentVersion)
                 {
-                    string msg = "An update of " + info.productName + " is available online. Do you want to install the update?";
+                    string msg = "An update (from " + info.currentVersion + " to " + info.result + ") of " + info.productName + " is available online. Do you want to install the update?";
                     MessageBoxResult result = MessageBox.Show(msg, "Updater", MessageBoxButton.YesNo, MessageBoxImage.Information);
                     if (result == MessageBoxResult.Yes)
                     {

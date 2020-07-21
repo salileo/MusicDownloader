@@ -39,6 +39,12 @@
           <Shortcut Id="RootShortcut" Name="$(var.ProductName)" Directory="ProgramMenuFolder" WorkingDirectory="INSTALLDIR" Advertise="yes" Icon="MainIcon.ico" IconIndex="0"/>
         </File>
       </Component>
+      <Component Id="Dep1Components" Guid="*">
+        <File Id="Dep1File" Name="Newtonsoft.Json.dll" DiskId="1" Source="$(var.Dep1FilePath)" KeyPath="yes" Vital="yes">
+          <Shortcut Id="Dep1Shortcut" Name="Newtonsoft.Json" Directory="ProgramMenuFolder" WorkingDirectory="INSTALLDIR" Advertise="yes" Icon="MainIcon.ico" IconIndex="0"/>
+        </File>
+      </Component>
+
       <!-- TODO: Add any additional components that need to go in the root folder -->
     </DirectoryRef>
     <!-- TODO: Add additional DirectoryRef tags based on subfolders created under INSTALLDIR -->
@@ -76,6 +82,7 @@
 
     <Feature Id="Complete" Level="1" Title="$(var.ProductName)">
       <ComponentRef Id="RootComponents"/>
+      <ComponentRef Id="Dep1Components"/>
     </Feature>
 
     <Property Id="ARPHELPLINK" Value="http://sites.google.com/site/salilsoftware"/>

@@ -64,7 +64,6 @@ namespace MusicDownloader
 
         private void DestinationFolder_TextChanged(object sender, TextChangedEventArgs e)
         {
-            //if (Directory.Exists(c_destPath.Text))
             DestinationPathTracker.Instance.NotifyPropertyChanged("");
         }
 
@@ -99,17 +98,12 @@ namespace MusicDownloader
         }
 
         private Node_Directory m_Movies;
-        private Node_Directory m_Movies2;
         private Node_Directory m_Pop;
-        private Node_Directory m_Artist;
-        private Node_Directory m_Artist2;
-        private Node_Directory m_Singles;
-        private Node_Directory m_Oldies;
-        private Node_Directory m_Indian;
+        private Node_Directory m_Artist_Hindi;
+        private Node_Directory m_Artist_Punjabi;
         private Node_Directory m_Bhangra;
-        private Node_Directory m_Ghazals;
+        private Node_Directory m_Oldies;
         private Node_Directory m_Instrumental;
-        private Node_Directory m_Pakistani;
         private void Category_Changed(object sender, SelectionChangedEventArgs e)
         {
             ComboBoxItem selected = e.AddedItems[0] as ComboBoxItem;
@@ -121,98 +115,58 @@ namespace MusicDownloader
                 case "Movies":
                     if (m_Movies == null)
                     {
-                        m_Movies = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/347/movies");
+                        m_Movies = new Node_Directory(name, "/songs/Audio/indian/movies/");
                         m_Movies.Init();
                     }
                     root = m_Movies;
                     break;
-                case "Movies (part 2)":
-                    if (m_Movies2 == null)
-                    {
-                        m_Movies2 = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/953/movies");
-                        m_Movies2.Init();
-                    }
-                    root = m_Movies2;
-                    break;
                 case "Pop":
                     if (m_Pop == null)
                     {
-                        m_Pop = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/10/pop");
+                        m_Pop = new Node_Directory(name, "/songs/Audio/indian/POP/");
                         m_Pop.Init();
                     }
                     root = m_Pop;
                     break;
-                case "Artist":
-                    if (m_Artist == null)
+                case "Artist (Hindi)":
+                    if (m_Artist_Hindi == null)
                     {
-                        m_Artist = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/247/artists");
-                        m_Artist.Init();
+                        m_Artist_Hindi = new Node_Directory(name, "/songs/Audio/indian/artists/Hindi/");
+                        m_Artist_Hindi.Init();
                     }
-                    root = m_Artist;
+                    root = m_Artist_Hindi;
                     break;
-                case "Artist (part 2)":
-                    if (m_Artist2 == null)
+                case "Artist (Punjabi)":
+                    if (m_Artist_Punjabi == null)
                     {
-                        m_Artist2 = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/781/artist");
-                        m_Artist2.Init();
+                        m_Artist_Punjabi = new Node_Directory(name, "/songs/Audio/indian/artists/Punjabi/");
+                        m_Artist_Punjabi.Init();
                     }
-                    root = m_Artist2;
-                    break;
-                case "Singles":
-                    if (m_Singles == null)
-                    {
-                        m_Singles = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/3/exclusive-singles-&-promo-songs");
-                        m_Singles.Init();
-                    }
-                    root = m_Singles;
-                    break;
-                case "Oldies":
-                    if (m_Oldies == null)
-                    {
-                        m_Oldies = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/771/oldies");
-                        m_Oldies.Init();
-                    }
-                    root = m_Oldies;
-                    break;
-                case "Indian":
-                    if (m_Indian == null)
-                    {
-                        m_Indian = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/2/indian");
-                        m_Indian.Init();
-                    }
-                    root = m_Indian;
+                    root = m_Artist_Punjabi;
                     break;
                 case "Bhangra":
                     if (m_Bhangra == null)
                     {
-                        m_Bhangra = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/267/bhangra");
+                        m_Bhangra = new Node_Directory(name, "/songs/Audio/indian/bhangra/");
                         m_Bhangra.Init();
                     }
                     root = m_Bhangra;
                     break;
-                case "Ghazals":
-                    if (m_Ghazals == null)
+                case "Oldies":
+                    if (m_Oldies == null)
                     {
-                        m_Ghazals = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/1124/ghazals");
-                        m_Ghazals.Init();
+                        m_Oldies = new Node_Directory(name, "/songs/Audio/indian/oldies/");
+                        m_Oldies.Init();
                     }
-                    root = m_Ghazals;
+                    root = m_Oldies;
                     break;
                 case "Instrumental":
                     if (m_Instrumental == null)
                     {
-                        m_Instrumental = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/5/instrumentals");
+                        m_Instrumental = new Node_Directory(name, "http://apunkabollywood.net/songs/Audio/indian/Instrumentals/");
                         m_Instrumental.Init();
                     }
                     root = m_Instrumental;
-                    break;
-                case "Pakistani":
-                    if (m_Pakistani == null)
-                    {
-                        m_Pakistani = new Node_Directory(name, "http://www.apunkabollywood.net/browser/category/view/780/pakistani");
-                        m_Pakistani.Init();
-                    }
-                    root = m_Pakistani;
                     break;
                 default:
                     ErrorLog.Show("Invalid category.");

@@ -55,17 +55,12 @@
                             <TextBlock Grid.Row="0" Text="Choose category :"/>
                             <ComboBox Grid.Row="1" Name="c_category" SelectionChanged="Category_Changed">
                                 <ComboBoxItem Content="Movies"/>
-                                <ComboBoxItem Content="Movies (part 2)"/>
                                 <ComboBoxItem Content="Pop"/>
-                                <ComboBoxItem Content="Artist"/>
-                                <ComboBoxItem Content="Artist (part 2)"/>
-                                <ComboBoxItem Content="Singles"/>
-                                <ComboBoxItem Content="Oldies"/>
-                                <ComboBoxItem Content="Indian"/>
+                                <ComboBoxItem Content="Artist (Hindi)"/>
+                                <ComboBoxItem Content="Artist (Punjabi)"/>
                                 <ComboBoxItem Content="Bhangra"/>
-                                <ComboBoxItem Content="Ghazals"/>
+                                <ComboBoxItem Content="Oldies"/>
                                 <ComboBoxItem Content="Instrumental"/>
-                                <ComboBoxItem Content="Pakistani"/>
                             </ComboBox>
                             <Button Grid.Row="2" Margin="0,15,0,0" Name="c_addItem" Content="Add selection to download list" Click="AddItem_Clicked"/>
                             <TreeView Grid.Row="3" Name="c_tree" ItemTemplate="{StaticResource treeViewItemTemplate}" PreviewMouseLeftButtonDown="c_tree_PreviewMouseLeftButtonDown" PreviewMouseMove="c_tree_PreviewMouseMove"/>
@@ -126,7 +121,7 @@
             </TabItem>
             <TabItem Header="Website">
                 <Grid Margin="10">
-                    <WebBrowser Source="http://www.apunkabollywood.com/browser/category/view"/>
+                    <WebBrowser Source="http://apunkabollywood.net/"/>
                 </Grid>
             </TabItem>
         </TabControl>
